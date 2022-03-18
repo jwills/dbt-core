@@ -294,13 +294,23 @@ class TestBuilder(Generic[Testable]):
                 "test must be dict or str, got {} (value {})".format(type(test), test)
             )
 
-        test = list(test.items())
-        if len(test) != 1:
-            raise_parsing_error(
-                "test definition dictionary must have exactly one key, got"
-                " {} instead ({} keys)".format(test, len(test))
-            )
-        test_name, test_args = test[0]
+        # If the test is a dictionary with top-level keys, the test name is "test_name"
+        # and the rest are arguments
+        # {'name': 'my_favorite_test', 'test_name': 'unique', 'config': {'where': '1=1'}}
+        if "test_name" in test.keys():
+            test_name = test.pop("test_name")
+            test_args = test
+        # If the test is a nested dictionary with one top-level key, the test name
+        # is the dict name, and nested keys are arguments
+        # {'unique': {'name': 'my_favorite_test', 'config': {'where': '1=1'}}}
+        else:
+            test = list(test.items())
+            if len(test) != 1:
+                raise_parsing_error(
+                    "test definition dictionary must have exactly one key, got"
+                    " {} instead ({} keys)".format(test, len(test))
+                )
+            test_name, test_args = test[0]
 
         if not isinstance(test_args, dict):
             raise_parsing_error(
