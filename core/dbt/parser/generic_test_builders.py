@@ -25,9 +25,12 @@ from dbt.exceptions import raise_compiler_error, raise_parsing_error
 from dbt.parser.search import FileBlock
 
 
-def get_nice_generic_test_name(
+def synthesize_generic_test_names(
     test_type: str, test_name: str, args: Dict[str, Any]
 ) -> Tuple[str, str]:
+    # Using the type, name, and arguments to this generic test, synthesize a (hopefully) unique name
+    # Returns a shorter version (hashed/truncated, for the compiled file)
+    # as well as the full name (for the unique_id + FQN)
     flat_args = []
     for arg_name in sorted(args):
         # the model is already embedded in the name, so skip it
@@ -263,13 +266,23 @@ class TestBuilder(Generic[Testable]):
         if self.namespace is not None:
             self.package_name = self.namespace
 
-        compiled_name, fqn_name = self.get_test_name()
-        self.compiled_name: str = compiled_name
-        self.fqn_name: str = fqn_name
+        # If the user has provided a custom name for this generic test, use it
+        # Then delete the "name" argument to avoid passing it into the test macro
+        # Otherwise, use an auto-generated name synthesized from test inputs
+        self.compiled_name: str = ""
+        self.fqn_name: str = ""
 
-        # use hashed name as alias if too long
-        if compiled_name != fqn_name and "alias" not in self.config:
-            self.config["alias"] = compiled_name
+        if "name" in self.args:
+            self.compiled_name = self.args["name"]
+            self.fqn_name = self.args["name"]
+            del self.args["name"]
+        else:
+            short_name, full_name = self.get_synthetic_test_names()
+            self.compiled_name = short_name
+            self.fqn_name = full_name
+            # use hashed name as alias if full name is too long
+            if short_name != full_name and "alias" not in self.config:
+                self.config["alias"] = short_name
 
     def _bad_type(self) -> TypeError:
         return TypeError('invalid target type "{}"'.format(type(self.target)))
@@ -401,7 +414,8 @@ class TestBuilder(Generic[Testable]):
             macro_name = "{}.{}".format(self.namespace, macro_name)
         return macro_name
 
-    def get_test_name(self) -> Tuple[str, str]:
+    def get_synthetic_test_names(self) -> Tuple[str, str]:
+        # Returns two names: shorter (for the compiled file), full (for the unique_id + FQN)
         if isinstance(self.target, UnparsedNodeUpdate):
             name = self.name
         elif isinstance(self.target, UnpatchedSourceDefinition):
@@ -410,7 +424,7 @@ class TestBuilder(Generic[Testable]):
             raise self._bad_type()
         if self.namespace is not None:
             name = "{}_{}".format(self.namespace, name)
-        return get_nice_generic_test_name(name, self.target.name, self.args)
+        return synthesize_generic_test_names(name, self.target.name, self.args)
 
     def construct_config(self) -> str:
         configs = ",".join(
