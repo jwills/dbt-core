@@ -273,6 +273,10 @@ class TestBuilder(Generic[Testable]):
         self.fqn_name: str = ""
 
         if "name" in self.args:
+            # TODO: Should we append the model name to the test name here?
+            # Or trust the user to have globally unique names within their project?
+            # Logic like this, with accounting for source table targets:
+            # generic_test_name = f"{self.args["name"]}_{target.name}"
             self.compiled_name = self.args["name"]
             self.fqn_name = self.args["name"]
             del self.args["name"]
