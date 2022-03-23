@@ -419,7 +419,7 @@ def track_runnable_timing(options):
     track(
         active_user,
         category="dbt",
-        action="runnable",
+        action="runnable_timing",
         label=get_invocation_id(),
         context=context,
     )
