@@ -117,7 +117,7 @@ Contributors:
 ### Breaking changes
 
 - Add full node selection to source freshness command and align selection syntax with other tasks (`dbt source freshness --select source_name` --> `dbt source freshness --select source:souce_name`) and rename `dbt source snapshot-freshness` -> `dbt source freshness`. ([#2987](https://github.com/dbt-labs/dbt/issues/2987), [#3554](https://github.com/dbt-labs/dbt/pull/3554))
-- **dbt-snowflake:** Turn off transactions and turn on `autocommit` by default. Explicitly specify `begin` and `commit` for DML statements in incremental and snapshot materializations. Note that this may affect user-space code that depends on transactions.
+- **dbt-snowflake:** Turn off transactions and turn on `autocommit` by default. Within dbt materializations, wrap DML statements in explicit `begin` and `commit`. Note that it is not recommended to run DML statements outside of dbt materialization logic. If you do this, despite our recommendation, you will need to wrap those statements in explicit `begin` and `commit`. Note also that this may affect user-space code that depends on transactions, such as pre-hooks and post-hooks that specify `transaction: true` or `transaction: false`. We recommend removing those references to transactions. ([#2748](https://github.com/dbt-labs/dbt/issues/2748), [#3480](https://github.com/dbt-labs/dbt/pull/3480), [#3510](https://github.com/dbt-labs/dbt/pull/3510))
 
 ### Features
 
