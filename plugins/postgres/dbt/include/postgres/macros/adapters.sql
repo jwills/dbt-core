@@ -57,9 +57,9 @@
           numeric_scale
 
       from {{ relation.information_schema('columns') }}
-      where table_name = '{{ relation.identifier }}'
+      where lower(table_name) = lower('{{ relation.identifier }}')
         {% if relation.schema %}
-        and table_schema = '{{ relation.schema }}'
+        and lower(table_schema) = lower('{{ relation.schema }}')
         {% endif %}
       order by ordinal_position
 
