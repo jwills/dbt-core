@@ -138,6 +138,25 @@ class DBTIntegrationTest(unittest.TestCase):
     def database_host(self):
         return os.getenv('POSTGRES_TEST_HOST', 'localhost')
 
+    def duckdb_profile(self):
+        db_path = os.path.join(self.test_root_dir, 'test.db')
+        return {
+            'config': {
+                'send_anonymous_usage_stats': False
+            },
+            'test': {
+                'outputs': {
+                    'default2': {
+                        'type': 'duckdb',
+                        'threads': 4,
+                        'path': db_path,
+                        'schema': self.unique_schema()
+                    }
+                },
+                'target': 'default2'
+            }
+        }
+
     def postgres_profile(self):
         return {
             'config': {
@@ -270,6 +289,8 @@ class DBTIntegrationTest(unittest.TestCase):
             return self.postgres_profile()
         elif adapter_type == 'presto':
             return self.presto_profile()
+        elif adapter_type == 'duckdb':
+            return self.duckdb_profile()
         else:
             raise ValueError('invalid adapter type {}'.format(adapter_type))
 
