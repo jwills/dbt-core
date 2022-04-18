@@ -1,4 +1,4 @@
 -e ./core
--e ./plugins/duckdb
 -e ./plugins/postgres
+-e ./plugins/duckdb
 -e ./tests/adapter

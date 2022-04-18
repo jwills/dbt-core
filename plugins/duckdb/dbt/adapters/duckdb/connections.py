@@ -1,4 +1,4 @@
-from contextlib import contextmanager
+import contextlib
 
 import duckdb
 
@@ -25,13 +25,17 @@ class DuckDBCredentials(Credentials):
         return ("database", "schema", "path")
 
 
-class DuckDBCursorWrapper:
+class DuckDBCursorWrapper(contextlib.AbstractContextManager):
     def __init__(self, cursor):
         self.cursor = cursor
 
     # forward along all non-execute() methods/attribute look ups
     def __getattr__(self, name):
         return getattr(self.cursor, name)
+
+    def __exit__(self, exc_type, exc_value, traceback):
+        self.cursor.close()
+        return None
 
     def execute(self, sql, bindings=None):
         try:
@@ -84,7 +88,7 @@ class DuckDBConnectionManager(SQLConnectionManager):
     def cancel(self, connection):
         pass
 
-    @contextmanager
+    @contextlib.contextmanager
     def exception_handler(self, sql: str, connection_name="master"):
         try:
             yield

@@ -76,7 +76,7 @@ class TestArgs:
 
 
 def _profile_from_test_name(test_name):
-    adapter_names = ('postgres', 'presto')
+    adapter_names = ('duckdb', 'postgres', 'presto')
     adapters_in_name = sum(x in test_name for x in adapter_names)
     if adapters_in_name != 1:
         raise ValueError(
@@ -148,7 +148,7 @@ class DBTIntegrationTest(unittest.TestCase):
                 'outputs': {
                     'default2': {
                         'type': 'duckdb',
-                        'threads': 4,
+                        'threads': 1,
                         'path': db_path,
                         'schema': self.unique_schema()
                     }
