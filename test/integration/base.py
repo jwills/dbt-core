@@ -76,7 +76,7 @@ class TestArgs:
 
 
 def _profile_from_test_name(test_name):
-    adapter_names = ('duckdb', 'postgres', 'presto')
+    adapter_names = ('postgres', 'presto')
     adapters_in_name = sum(x in test_name for x in adapter_names)
     if adapters_in_name != 1:
         raise ValueError(
@@ -286,7 +286,7 @@ class DBTIntegrationTest(unittest.TestCase):
 
     def get_profile(self, adapter_type):
         if adapter_type == 'postgres':
-            return self.postgres_profile()
+            return self.duckdb_profile()
         elif adapter_type == 'presto':
             return self.presto_profile()
         elif adapter_type == 'duckdb':
