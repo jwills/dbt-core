@@ -12,8 +12,8 @@
 {% set required = ['name', 'schema', 'type', 'threads'] %}
 
 {# Require what we docuement at https://docs.getdbt.com/docs/target #}
-{% if target.type == 'postgres' %}
-	{% do required.extend(['dbname', 'host', 'user', 'port']) %}
+{% if target.type == 'duckdb' %}
+	{% do required.extend(['path']) %}
 {% else %}
   {% do exceptions.raise_compiler_error('invalid target, got unknown type "' ~ target.type ~ '"') %}
 {% endif %}

@@ -62,13 +62,9 @@ def get_custom_profiles_config(database_host, custom_schema):
         "test": {
             "outputs": {
                 "default": {
-                    "type": "postgres",
+                    "type": "duckdb",
                     "threads": 1,
-                    "host": database_host,
-                    "port": 5432,
-                    "user": "root",
-                    "pass": "password",
-                    "dbname": "dbt",
+                    "path": "/tmp/015_integration_test",
                     "schema": custom_schema
                 },
             },
