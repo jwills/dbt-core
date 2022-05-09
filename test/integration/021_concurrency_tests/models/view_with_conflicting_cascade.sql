@@ -1,5 +1,5 @@
-select * from {{ref('table_a')}}
+select * from {{ref('table_one')}}
 
 union all
 
-select * from {{ref('table_b')}}
+select * from {{ref('table_two')}}

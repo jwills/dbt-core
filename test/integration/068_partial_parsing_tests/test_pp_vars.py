@@ -310,8 +310,7 @@ class ProfileEnvVarTest(BasePPTest):
         # calls 'load_config' before the tests are run.
         # Note: only the specified profile is rendered, so there's no
         # point it setting env_vars in non-used profiles.
-        os.environ['ENV_VAR_USER'] = 'root'
-        os.environ['ENV_VAR_PASS'] = 'password'
+        os.environ['ENV_VAR_PATH'] = '/tmp/load_config'
         return {
             'config': {
                 'send_anonymous_usage_stats': False
@@ -319,15 +318,9 @@ class ProfileEnvVarTest(BasePPTest):
             'test': {
                 'outputs': {
                     'dev': {
-                        'type': 'postgres',
+                        'type': 'duckdb',
                         'threads': 1,
-                        'host': self.database_host,
-                        'port': 5432,
-                        'user': "root",
-                        'pass': "password",
-                        'user': "{{ env_var('ENV_VAR_USER') }}",
-                        'pass': "{{ env_var('ENV_VAR_PASS') }}",
-                        'dbname': 'dbt',
+                        'path': "{{ env_var('ENV_VAR_PATH') }}",
                         'schema': self.unique_schema()
                     },
                 },
@@ -339,8 +332,7 @@ class ProfileEnvVarTest(BasePPTest):
     def test_postgres_profile_env_vars(self):
 
         # Initial run
-        os.environ['ENV_VAR_USER'] = 'root'
-        os.environ['ENV_VAR_PASS'] = 'password'
+        os.environ['ENV_VAR_PATH'] = '/tmp/pevardb'
         self.setup_directories()
         self.copy_file('test-files/model_one.sql', 'models/model_one.sql')
         results = self.run_dbt(["run"])
@@ -348,7 +340,7 @@ class ProfileEnvVarTest(BasePPTest):
         env_vars_checksum = manifest.state_check.profile_env_vars_hash.checksum
 
         # Change env_vars, the user doesn't exist, this should fail
-        os.environ['ENV_VAR_USER'] = 'fake_user'
+        os.environ['ENV_VAR_PATH'] = '/nonexistent/path/to/db'
         (results, log_output) = self.run_dbt_and_capture(["run"], expect_pass=False)
         self.assertTrue('env vars used in profiles.yml have changed' in log_output)
         manifest = get_manifest()

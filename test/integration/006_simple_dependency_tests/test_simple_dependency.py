@@ -267,7 +267,7 @@ class TestSimpleDependencyBadProfile(DBTIntegrationTest):
             }
         }
 
-    def postgres_profile(self):
+    def duckdb_profile(self):
         # Need to set the environment variable here initially because
         # the unittest setup does a load_config.
         os.environ['PROFILE_TEST_HOST'] = self.database_host
@@ -278,13 +278,8 @@ class TestSimpleDependencyBadProfile(DBTIntegrationTest):
             'test': {
                 'outputs': {
                     'default2': {
-                        'type': 'postgres',
-                        'threads': 4,
-                        'host': "{{ env_var('PROFILE_TEST_HOST') }}",
-                        'port': 5432,
-                        'user': 'root',
-                        'pass': 'password',
-                        'dbname': 'dbt',
+                        'type': 'duckdb',
+                        'path': "{{ env_var('PROFILE_TEST_HOST') }}",
                         'schema': self.unique_schema()
                     },
                 },

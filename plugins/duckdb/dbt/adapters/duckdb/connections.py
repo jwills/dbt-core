@@ -1,4 +1,6 @@
 import contextlib
+from dataclasses import dataclass
+from typing import Any, Dict, Optional
 
 import duckdb
 
@@ -8,21 +10,28 @@ from dbt.adapters.sql import SQLConnectionManager
 from dbt.contracts.connection import ConnectionState, AdapterResponse
 from dbt.logger import GLOBAL_LOGGER as logger
 
-from dataclasses import dataclass
-
 
 @dataclass
 class DuckDBCredentials(Credentials):
-    database: str = "main"
-    schema: str = "main"
-    path: str = ":memory:"
+    path: str
+    database: Optional[str]
+    schema: Optional[str]
+
+    @classmethod
+    def __pre_deserialize__(cls, data: Dict[Any, Any]) -> Dict[Any, Any]:
+        data = super().__pre_deserialize__(data)
+        if "database" not in data:
+            data["database"] = "main"
+        if "schema" not in data:
+            data["schema"] = "main"
+        return data
 
     @property
     def type(self):
         return "duckdb"
 
     def _connection_keys(self):
-        return ("database", "schema", "path")
+        return ("path", "database", "schema")
 
 
 class DuckDBCursorWrapper(contextlib.AbstractContextManager):
@@ -44,7 +53,10 @@ class DuckDBCursorWrapper(contextlib.AbstractContextManager):
             else:
                 return self.cursor.execute(sql, bindings)
         except RuntimeError as e:
-            raise dbt.exceptions.RuntimeException(str(e))
+            if "cannot commit - no transaction is active" in str(e):
+                return
+            else:
+                raise e
 
 
 class DuckDBConnectionWrapper:
@@ -69,6 +81,11 @@ class DuckDBConnectionManager(SQLConnectionManager):
             return connection
 
         credentials = cls.get_credentials(connection.credentials)
+        if not credentials.path or credentials.path == ":memory:":
+            raise dbt.exceptions.FailedToConnectException(
+                "ERROR invalid: no path found in credentials"
+            )
+
         try:
             handle = duckdb.connect(credentials.path, read_only=False)
             connection.handle = DuckDBConnectionWrapper(handle)
@@ -92,12 +109,29 @@ class DuckDBConnectionManager(SQLConnectionManager):
     def exception_handler(self, sql: str, connection_name="master"):
         try:
             yield
+
         except RuntimeError as e:
-            logger.debug("duckdb error: {}".format(str(e)))
-        except Exception as exc:
-            logger.debug("Error running SQL: {}".format(sql))
+            logger.debug("DuckDB error: {}".format(str(e)))
+
+            try:
+                self.rollback_if_open()
+            except RuntimeError:
+                logger.debug("Failed to release connection!")
+                pass
+
+            raise dbt.exceptions.DatabaseException(str(e).strip()) from e
+
+        except Exception as e:
+            logger.debug("Error running SQL: {}", sql)
             logger.debug("Rolling back transaction.")
-            raise dbt.exceptions.RuntimeException(str(exc)) from exc
+            self.rollback_if_open()
+            if isinstance(e, dbt.exceptions.RuntimeException):
+                # during a sql query, an internal to dbt exception was raised.
+                # this sounds a lot like a signal handler and probably has
+                # useful information, so raise it without modification.
+                raise
+
+            raise dbt.exceptions.RuntimeException(e) from e
 
     @classmethod
     def get_credentials(cls, credentials):

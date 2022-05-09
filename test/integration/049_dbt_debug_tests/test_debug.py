@@ -19,27 +19,19 @@ class TestDebug(DBTIntegrationTest):
     def models(self):
         return self.dir('models')
 
-    def postgres_profile(self):
-        profile = super(TestDebug, self).postgres_profile()
+    def duckdb_profile(self):
+        profile = super(TestDebug, self).duckdb_profile()
         profile['test']['outputs'].update({
             'nopass': {
-                'type': 'postgres',
-                'threads': 4,
-                'host': self.database_host,
-                'port': 5432,
-                'user': 'root',
-                # 'pass': 'password',
-                'dbname': 'dbt',
+                'type': 'duckdb',
+                'threads': 1,
+                # 'path': ':nope:',
                 'schema': self.unique_schema()
             },
             'wronguser': {
-                'type': 'postgres',
-                'threads': 4,
-                'host': self.database_host,
-                'port': 5432,
-                'user': 'notmyuser',
-                'pass': 'notmypassword',
-                'dbname': 'dbt',
+                'type': 'duckdb',
+                'threads': 1,
+                'path': '/this/path/does/not/exist',
                 'schema': self.unique_schema()
             },
             'none_target': None

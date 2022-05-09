@@ -19,8 +19,8 @@ class TestConcurrency(DBTIntegrationTest):
 
         self.assertTablesEqual("seed", "view_model")
         self.assertTablesEqual("seed", "dep")
-        self.assertTablesEqual("seed", "table_a")
-        self.assertTablesEqual("seed", "table_b")
+        self.assertTablesEqual("seed", "table_one")
+        self.assertTablesEqual("seed", "table_two")
         self.assertTableDoesNotExist("invalid")
         self.assertTableDoesNotExist("skip")
 
@@ -31,8 +31,8 @@ class TestConcurrency(DBTIntegrationTest):
 
         self.assertTablesEqual("seed", "view_model")
         self.assertTablesEqual("seed", "dep")
-        self.assertTablesEqual("seed", "table_a")
-        self.assertTablesEqual("seed", "table_b")
+        self.assertTablesEqual("seed", "table_one")
+        self.assertTablesEqual("seed", "table_two")
         self.assertTableDoesNotExist("invalid")
         self.assertTableDoesNotExist("skip")
 

@@ -5,27 +5,17 @@ from dbt.exceptions import CompilationException
 MODEL_PRE_HOOK = """
    insert into {{this.schema}}.on_model_hook (
         "state",
-        "target.dbname",
-        "target.host",
         "target.name",
         "target.schema",
         "target.type",
-        "target.user",
-        "target.pass",
-        "target.port",
         "target.threads",
         "run_started_at",
         "invocation_id"
    ) VALUES (
     'start',
-    '{{ target.dbname }}',
-    '{{ target.host }}',
     '{{ target.name }}',
     '{{ target.schema }}',
     '{{ target.type }}',
-    '{{ target.user }}',
-    '{{ target.get("pass", "") }}',
-    {{ target.port }},
     {{ target.threads }},
     '{{ run_started_at }}',
     '{{ invocation_id }}'
@@ -35,27 +25,17 @@ MODEL_PRE_HOOK = """
 MODEL_POST_HOOK = """
    insert into {{this.schema}}.on_model_hook (
         "state",
-        "target.dbname",
-        "target.host",
         "target.name",
         "target.schema",
         "target.type",
-        "target.user",
-        "target.pass",
-        "target.port",
         "target.threads",
         "run_started_at",
         "invocation_id"
    ) VALUES (
     'end',
-    '{{ target.dbname }}',
-    '{{ target.host }}',
     '{{ target.name }}',
     '{{ target.schema }}',
     '{{ target.type }}',
-    '{{ target.user }}',
-    '{{ target.get("pass", "") }}',
-    {{ target.port }},
     {{ target.threads }},
     '{{ run_started_at }}',
     '{{ invocation_id }}'
@@ -71,15 +51,10 @@ class BaseTestPrePost(DBTIntegrationTest):
 
         self.fields = [
             'state',
-            'target.dbname',
-            'target.host',
             'target.name',
-            'target.port',
             'target.schema',
             'target.threads',
             'target.type',
-            'target.user',
-            'target.pass',
             'run_started_at',
             'invocation_id'
         ]
@@ -102,15 +77,10 @@ class BaseTestPrePost(DBTIntegrationTest):
         ctxs = self.get_ctx_vars(state, count=count)
         for ctx in ctxs:
             self.assertEqual(ctx['state'], state)
-            self.assertEqual(ctx['target.dbname'], 'dbt')
-            self.assertEqual(ctx['target.host'], self.database_host)
             self.assertEqual(ctx['target.name'], 'default2')
-            self.assertEqual(ctx['target.port'], 5432)
             self.assertEqual(ctx['target.schema'], self.unique_schema())
-            self.assertEqual(ctx['target.threads'], 4)
-            self.assertEqual(ctx['target.type'], 'postgres')
-            self.assertEqual(ctx['target.user'], 'root')
-            self.assertEqual(ctx['target.pass'], '')
+            self.assertEqual(ctx['target.threads'], 1)
+            self.assertEqual(ctx['target.type'], 'duckdb')
 
             self.assertTrue(ctx['run_started_at'] is not None and len(ctx['run_started_at']) > 0, 'run_started_at was not set')
             self.assertTrue(ctx['invocation_id'] is not None and len(ctx['invocation_id']) > 0, 'invocation_id was not set')
@@ -165,14 +135,9 @@ class TestHookRefs(BaseTestPrePost):
                         'post-hook': ['''
                         insert into {{this.schema}}.on_model_hook select
                         state,
-                        '{{ target.dbname }}' as "target.dbname",
-                        '{{ target.host }}' as "target.host",
                         '{{ target.name }}' as "target.name",
                         '{{ target.schema }}' as "target.schema",
                         '{{ target.type }}' as "target.type",
-                        '{{ target.user }}' as "target.user",
-                        '{{ target.get("pass", "") }}' as "target.pass",
-                        {{ target.port }} as "target.port",
                         {{ target.threads }} as "target.threads",
                         '{{ run_started_at }}' as "run_started_at",
                         '{{ invocation_id }}' as "invocation_id"

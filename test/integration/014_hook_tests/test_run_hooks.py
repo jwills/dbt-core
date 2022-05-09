@@ -11,15 +11,10 @@ class TestPrePostRunHooks(DBTIntegrationTest):
 
         self.fields = [
             'state',
-            'target.dbname',
-            'target.host',
             'target.name',
-            'target.port',
             'target.schema',
             'target.threads',
             'target.type',
-            'target.user',
-            'target.pass',
             'run_started_at',
             'invocation_id'
         ]
@@ -90,15 +85,10 @@ class TestPrePostRunHooks(DBTIntegrationTest):
         ctx = self.get_ctx_vars(state)
 
         self.assertEqual(ctx['state'], state)
-        self.assertEqual(ctx['target.dbname'], 'dbt')
-        self.assertEqual(ctx['target.host'], self.database_host)
         self.assertEqual(ctx['target.name'], 'default2')
-        self.assertEqual(ctx['target.port'], 5432)
         self.assertEqual(ctx['target.schema'], self.unique_schema())
-        self.assertEqual(ctx['target.threads'], 4)
-        self.assertEqual(ctx['target.type'], 'postgres')
-        self.assertEqual(ctx['target.user'], 'root')
-        self.assertEqual(ctx['target.pass'], '')
+        self.assertEqual(ctx['target.threads'], 1)
+        self.assertEqual(ctx['target.type'], 'duckdb')
 
         self.assertTrue(ctx['run_started_at'] is not None and len(ctx['run_started_at']) > 0, 'run_started_at was not set')
         self.assertTrue(ctx['invocation_id'] is not None and len(ctx['invocation_id']) > 0, 'invocation_id was not set')

@@ -66,13 +66,9 @@ class TestCustomProjectSchemaWithPrefix(DBTIntegrationTest):
             'test': {
                 'outputs': {
                     'my-target': {
-                        'type': 'postgres',
+                        'type': 'duckdb',
                         'threads': 1,
-                        'host': self.database_host,
-                        'port': 5432,
-                        'user': 'root',
-                        'pass': 'password',
-                        'dbname': 'dbt',
+                        'path': '/tmp/customscheme1',
                         'schema': self.unique_schema(),
                     }
                 },
@@ -159,13 +155,9 @@ class TestCustomSchemaWithCustomMacro(DBTIntegrationTest):
             'test': {
                 'outputs': {
                     'prod': {
-                        'type': 'postgres',
+                        'type': 'duckdb',
                         'threads': 1,
-                        'host': self.database_host,
-                        'port': 5432,
-                        'user': 'root',
-                        'pass': 'password',
-                        'dbname': 'dbt',
+                        'path': '/tmp/customscheme2',
                         'schema': self.unique_schema(),
                     }
                 },
@@ -300,13 +292,9 @@ class TestCustomSchemaWithCustomMacroFromModelName(DBTIntegrationTest):
             'test': {
                 'outputs': {
                     'prod': {
-                        'type': 'postgres',
+                        'type': 'duckdb',
                         'threads': 1,
-                        'host': self.database_host,
-                        'port': 5432,
-                        'user': 'root',
-                        'pass': 'password',
-                        'dbname': 'dbt',
+                        'path': '/tmp/customscheme3',
                         'schema': self.unique_schema(),
                     }
                 },

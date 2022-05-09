@@ -18,13 +18,9 @@ class TestTimezones(DBTIntegrationTest):
             'test': {
                 'outputs': {
                     'dev': {
-                        'type': 'postgres',
+                        'type': 'duckdb',
                         'threads': 1,
-                        'host': self.database_host,
-                        'port': 5432,
-                        'user': "root",
-                        'pass': "password",
-                        'dbname': 'dbt',
+                        'path': "/tmp/tzdbtest",
                         'schema': self.unique_schema()
                     },
                 },
