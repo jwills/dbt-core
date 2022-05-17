@@ -3,7 +3,7 @@ from typing import Any, Dict, List
 from dbt.clients.yaml_helper import yaml, Loader, Dumper, load_yaml_text  # noqa: F401
 from dbt.dataclass_schema import ValidationError
 
-from .renderer import SecretRenderer
+from .renderer import ExternalServiceRenderer
 
 from dbt.clients.system import (
     load_file_contents,
@@ -50,7 +50,7 @@ class ExternalServiceConfig(Dict[str, ExternalService]):
     def render_from_dict(
         cls,
         data: Dict[str, Any],
-        renderer: SecretRenderer,
+        renderer: ExternalServiceRenderer,
     ) -> "ExternalServiceConfig":
         try:
             rendered = renderer.render_data(data)
@@ -65,7 +65,7 @@ class ExternalServiceConfig(Dict[str, ExternalService]):
     def from_path(
         cls,
         path: Path,
-        renderer: SecretRenderer,
+        renderer: ExternalServiceRenderer,
     ) -> "ExternalServiceConfig":
         try:
             data = load_yaml_text(load_file_contents(str(path)))

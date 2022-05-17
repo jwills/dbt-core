@@ -185,3 +185,9 @@ class PackageRenderer(SecretRenderer):
     @property
     def name(self):
         return "Packages config"
+
+
+class ExternalServiceRenderer(SecretRenderer):
+    @property
+    def name(self):
+        return "External Service"
