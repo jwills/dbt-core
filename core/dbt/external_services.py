@@ -41,6 +41,29 @@ class ExternalService:
     auth: Auth
     endpoints: Dict[str, Endpoint] = field(default_factory=dict)
 
+    def validate(self, endpoint_name: str, **kwargs):
+        endpoint = self.endpoints[endpoint_name]
+        headers = {}
+        path_args, query_args, body_args = {}, {}, {}
+        for arg in endpoint.args:
+            if arg.name not in kwargs:
+                if arg.required:
+                    raise ValueError(f"Missing required argument {arg.name}")
+            else:
+                value = kwargs.pop(arg.name)
+                if arg.type == "path":
+                    path_args[arg.name] = value
+                elif arg.type == "query":
+                    query_args[arg.name] = value
+                elif arg.type == "body":
+                    body_args[arg.name] = value
+                elif arg.type == "header":
+                    headers[arg.name] = value
+                else:
+                    raise ValueError(f"Unknown argument type {arg.type} for {arg.name}")
+        self.base_url + endpoint.path.format(**path_args)
+        return
+
     def request(
         self, session: requests.Session, endpoint_name: str, **kwargs
     ) -> requests.Response:

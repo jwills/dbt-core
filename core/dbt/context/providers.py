@@ -1,5 +1,7 @@
 import abc
+import json
 import os
+import requests
 from typing import (
     Callable,
     Any,
@@ -266,50 +268,15 @@ class BaseSourceResolver(BaseResolver):
 
 
 class ResponseProxy:
-    def __init__(self, status_code: int, payload: str):
+    def __init__(self, status_code: int, text: str):
         self.status_code = status_code
-        self.payload = payload
-
-
-class BaseServiceResolver(metaclass=abc.ABCMeta):
-    def __init__(self, model, config):
-        self.model = model
-        self.config = config
+        self.text = text
 
     @property
-    def current_project(self):
-        return self.config.project_name
-
-    @abc.abstractmethod
-    def resolve(self, service_name: str, endpoint_name: str, **kwargs) -> ResponseProxy:
-        ...
-
-    def validate_args(self, service_name: str, endpoint_name: str, **kwargs):
-        if not isinstance(service_name, str):
-            raise CompilationException(
-                f"The service name (first) argument to service() must be a "
-                f"string, got {type(service_name)}"
-            )
-        svc = self.config.external_services.get(service_name)
-        if not svc:
-            raise CompilationException(
-                f"The service name '{service_name}' is not defined in the "
-                f"external_services section of the config"
-            )
-        if not isinstance(endpoint_name, str):
-            raise CompilationException(
-                f"The endpoint name (second) argument to service() must be a "
-                f"string, got {type(endpoint_name)}"
-            )
-        # TODO: endpoint and arg validation
-
-    def __call__(self, *args: str, **kwargs) -> ResponseProxy:
-        if len(args) != 2:
-            raise_compiler_error(
-                f"service() takes at least two arguments ({len(args)} given)", self.model
-            )
-        self.validate_args(args[0], args[1], **kwargs)
-        return self.resolve(args[0], args[1], **kwargs)
+    def json(self):
+        if self.payload:
+            return json.loads(self.text)
+        return None
 
 
 class Config(Protocol):
@@ -607,16 +574,61 @@ class RuntimeVar(ModelConfiguredVar):
     pass
 
 
+class BaseServiceResolver(metaclass=abc.ABCMeta):
+    def __init__(self, model, config):
+        self.model = model
+        self.config = config
+
+    @property
+    def current_project(self):
+        return self.config.project_name
+
+    @abc.abstractmethod
+    def resolve(self, service_name: str, endpoint_name: str, **kwargs) -> ResponseProxy:
+        ...
+
+    def validate_args(self, service_name: str, endpoint_name: str, **kwargs):
+        if not isinstance(service_name, str):
+            raise CompilationException(
+                f"The service name (first) argument to service() must be a "
+                f"string, got {type(service_name)}"
+            )
+        svc = self.config.external_services.get(service_name)
+        if not svc:
+            raise CompilationException(
+                f"The service name '{service_name}' is not defined in the "
+                f"external_services section of the config"
+            )
+        if not isinstance(endpoint_name, str):
+            raise CompilationException(
+                f"The endpoint name (second) argument to service() must be a "
+                f"string, got {type(endpoint_name)}"
+            )
+        try:
+            svc.validate(endpoint_name, **kwargs)
+        except ValueError as exc:
+            raise CompilationException(str(exc)) from exc
+
+    def __call__(self, *args: str, **kwargs) -> ResponseProxy:
+        if len(args) != 2:
+            raise_compiler_error(
+                f"service() takes at least two arguments ({len(args)} given)", self.model
+            )
+        self.validate_args(args[0], args[1], **kwargs)
+        return self.resolve(args[0], args[1], **kwargs)
+
+
 class ParseServiceResolver(BaseServiceResolver):
     def resolve(self, service_name: str, endpoint_name: str, **kwargs) -> ResponseProxy:
-        return ResponseProxy(status_code=200, payload="")
+        return ResponseProxy(status_code=200, text="")
 
 
 class RuntimeServiceResolver(BaseServiceResolver):
     def resolve(self, service_name: str, endpoint_name: str, **kwargs) -> ResponseProxy:
         svc = self.config.external_services[service_name]
-        resp = svc.request(endpoint_name, **kwargs)
-        return ResponseProxy(status_code=resp.status_code, payload=resp.text)
+        with requests.Session() as sess:
+            resp = svc.request(sess, endpoint_name, **kwargs)
+            return ResponseProxy(status_code=resp.status_code, text=resp.text)
 
 
 # Providers
@@ -840,6 +852,10 @@ class ProviderContext(ManifestContext):
     @contextproperty
     def source(self) -> Callable:
         return self.provider.source(self.db_wrapper, self.model, self.config, self.manifest)
+
+    @contextproperty
+    def service(self) -> Callable:
+        return self.provider.service(self.model, self.config)
 
     @contextproperty("config")
     def ctx_config(self) -> Config:
