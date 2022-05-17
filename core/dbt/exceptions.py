@@ -360,6 +360,10 @@ class DbtProfileError(DbtConfigError):
     pass
 
 
+class DbtExternalServiceError(DbtConfigError):
+    pass
+
+
 class SemverException(Exception):
     def __init__(self, msg=None):
         self.msg = msg
