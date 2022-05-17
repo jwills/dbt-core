@@ -115,7 +115,7 @@ def parse_auth(auth_definition: AuthMethod) -> Auth:
     elif isinstance(auth_definition, BearerAuthMethod):
         return Auth.bearer(auth_definition.token)
     else:
-        raise RuntimeException(f"Unknown auth type: {auth_definition}")
+        raise RuntimeException(f"Unknown auth method: {auth_definition.__class__}")
 
 
 def parse_endpoint(endpoint_definition: EndpointDefinition) -> Endpoint:

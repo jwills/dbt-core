@@ -118,6 +118,10 @@ class DbtProjectYamlRenderer(BaseRenderer):
     def get_package_renderer(self) -> BaseRenderer:
         return PackageRenderer(self.ctx_obj.cli_vars)
 
+    # Uses SecretRenderer
+    def get_external_services_renderer(self) -> BaseRenderer:
+        return ExternalServiceRenderer(self.ctx_obj.cli_vars)
+
     def render_project(
         self,
         project: Dict[str, Any],
@@ -135,6 +139,11 @@ class DbtProjectYamlRenderer(BaseRenderer):
 
     def render_selectors(self, selectors: Dict[str, Any]):
         return self.render_data(selectors)
+
+    def render_external_services(self, external_services: Dict[str, Any]):
+        """Render the given external services dict"""
+        external_services_renderer = self.get_external_services_renderer()
+        return external_services_renderer.render_data(external_services)
 
     def render_entry(self, value: Any, keypath: Keypath) -> Any:
         result = super().render_entry(value, keypath)

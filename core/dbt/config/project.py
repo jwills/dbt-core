@@ -40,6 +40,11 @@ from dbt.contracts.project import (
 from dbt.contracts.project import PackageConfig
 from dbt.dataclass_schema import ValidationError
 from .renderer import DbtProjectYamlRenderer
+from .external_services import (
+    external_service_config_from_data,
+    external_service_data_from_root,
+    ExternalServiceConfig,
+)
 from .selectors import (
     selector_config_from_data,
     selector_data_from_root,
@@ -231,6 +236,9 @@ class RenderComponents:
     project_dict: Dict[str, Any] = field(metadata=dict(description="The project dictionary"))
     packages_dict: Dict[str, Any] = field(metadata=dict(description="The packages dictionary"))
     selectors_dict: Dict[str, Any] = field(metadata=dict(description="The selectors dictionary"))
+    external_services_dict: Dict[str, Any] = field(
+        metadata=dict(description="The external services dictionary")
+    )
 
 
 @dataclass
@@ -265,11 +273,13 @@ class PartialProject(RenderComponents):
         rendered_project = renderer.render_project(self.project_dict, self.project_root)
         rendered_packages = renderer.render_packages(self.packages_dict)
         rendered_selectors = renderer.render_selectors(self.selectors_dict)
+        rendered_external_services = renderer.render_external_services(self.external_services_dict)
 
         return RenderComponents(
             project_dict=rendered_project,
             packages_dict=rendered_packages,
             selectors_dict=rendered_selectors,
+            external_services_dict=rendered_external_services,
         )
 
     # Called by 'collect_parts' in RuntimeConfig
@@ -305,6 +315,7 @@ class PartialProject(RenderComponents):
             project_dict=self.project_dict,
             packages_dict=self.packages_dict,
             selectors_dict=self.selectors_dict,
+            external_services_dict=self.external_services_dict,
         )
         dbt_version = _get_required_version(
             rendered.project_dict,
@@ -396,6 +407,8 @@ class PartialProject(RenderComponents):
 
         packages = package_config_from_data(rendered.packages_dict)
         selectors = selector_config_from_data(rendered.selectors_dict)
+        external_services = external_service_config_from_data(rendered.external_services_dict)
+
         manifest_selectors: Dict[str, Any] = {}
         if rendered.selectors_dict and rendered.selectors_dict["selectors"]:
             # this is a dict with a single key 'selectors' pointing to a list
@@ -431,6 +444,7 @@ class PartialProject(RenderComponents):
             packages=packages,
             manifest_selectors=manifest_selectors,
             selectors=selectors,
+            external_services=external_services,
             query_comment=query_comment,
             sources=sources,
             tests=tests,
@@ -450,6 +464,7 @@ class PartialProject(RenderComponents):
         project_dict: Dict[str, Any],
         packages_dict: Dict[str, Any],
         selectors_dict: Dict[str, Any],
+        external_services_dict: Dict[str, Any],
         *,
         verify_version: bool = False,
     ):
@@ -464,6 +479,7 @@ class PartialProject(RenderComponents):
             project_dict=project_dict,
             packages_dict=packages_dict,
             selectors_dict=selectors_dict,
+            external_services_dict=external_services_dict,
             verify_version=verify_version,
         )
 
@@ -482,11 +498,13 @@ class PartialProject(RenderComponents):
 
         packages_dict = package_data_from_root(project_root)
         selectors_dict = selector_data_from_root(project_root)
+        external_services_dict = external_service_data_from_root(project_root)
         return cls.from_dicts(
             project_root=project_root,
             project_dict=project_dict,
             selectors_dict=selectors_dict,
             packages_dict=packages_dict,
+            external_services_dict=external_services_dict,
             verify_version=verify_version,
         )
 
@@ -541,6 +559,7 @@ class Project:
     packages: Dict[str, Any]
     manifest_selectors: Dict[str, Any]
     selectors: SelectorConfig
+    external_services: ExternalServiceConfig
     query_comment: QueryComment
     config_version: int
     unrendered: RenderComponents
