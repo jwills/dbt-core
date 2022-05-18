@@ -1,10 +1,5 @@
 .DEFAULT_GOAL:=help
 
-# The version of python to use for tests with tox,
-# defaults to py38 but can be set by the user by
-# exporting the environment variable: `DBT_PY` to py, py39, py37, etc.
-DBT_PY ?= py38
-
 # Optional flag to run target in a docker container.
 # (example `make test USE_DOCKER=true`)
 ifeq ($(USE_DOCKER),true)
@@ -39,27 +34,27 @@ lint: .env ## Runs flake8 and mypy code checks against staged changes.
 	$(DOCKER_CMD) pre-commit run mypy-check --hook-stage manual | grep -v "INFO"
 
 .PHONY: unit
-unit: .env ## Runs unit tests with $(DBT_PY).
+unit: .env ## Runs unit tests with py
 	@\
-	$(DOCKER_CMD) tox -e $(DBT_PY)
+	$(DOCKER_CMD) tox -e py
 
 .PHONY: test
-test: .env ## Runs unit tests with $(DBT_PY) and code checks against staged changes.
+test: .env ## Runs unit tests with py and code checks against staged changes.
 	@\
-	$(DOCKER_CMD) tox -e $(DBT_PY); \
+	$(DOCKER_CMD) tox -e py; \
 	$(DOCKER_CMD) pre-commit run black-check --hook-stage manual | grep -v "INFO"; \
 	$(DOCKER_CMD) pre-commit run flake8-check --hook-stage manual | grep -v "INFO"; \
 	$(DOCKER_CMD) pre-commit run mypy-check --hook-stage manual | grep -v "INFO"
 
 .PHONY: integration
-integration: .env ## Runs postgres integration tests with $(DBT_PY).
+integration: .env ## Runs postgres integration tests with py-integration
 	@\
-	$(DOCKER_CMD) tox -e $(DBT_PY)-integration -- -nauto
+	$(DOCKER_CMD) tox -e py-integration -- -nauto
 
 .PHONY: integration-fail-fast
-integration-fail-fast: .env ## Runs postgres integration tests with $(DBT_PY) in "fail fast" mode.
+integration-fail-fast: .env ## Runs postgres integration tests with py-integration in "fail fast" mode.
 	@\
-	$(DOCKER_CMD) tox -e $(DBT_PY)-integration -- -x -nauto
+	$(DOCKER_CMD) tox -e py-integration -- -x -nauto
 
 .PHONY: setup-db
 setup-db: ## Setup Postgres database with docker-compose for system testing.
