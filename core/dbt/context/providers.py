@@ -274,7 +274,7 @@ class ResponseProxy:
 
     @property
     def json(self):
-        if self.payload:
+        if self.text:
             return json.loads(self.text)
         return None
 
