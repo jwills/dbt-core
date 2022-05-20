@@ -24,9 +24,7 @@ from dbt.external_services import Argument, Auth, Endpoint, ExternalService
 
 class ExternalServiceConfig(Dict[str, ExternalService]):
     @classmethod
-    def external_services_from_dict(
-        cls, data: Dict[str, Dict[str, Any]]
-    ) -> "ExternalServiceConfig":
+    def external_services_from_dict(cls, data: Dict[str, Any]) -> "ExternalServiceConfig":
         try:
             ExternalServiceFile.validate(data)
             external_service_file = ExternalServiceFile.from_dict(data)

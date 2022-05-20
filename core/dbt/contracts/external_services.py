@@ -1,7 +1,7 @@
 from dataclasses import dataclass, field
 from dbt.dataclass_schema import dbtClassMixin
 
-from typing import List, Literal, Union
+from typing import List, Union
 
 
 @dataclass
@@ -26,7 +26,7 @@ AuthMethodSpec = Union[BasicAuthMethod, BearerAuthMethod]
 @dataclass
 class ArgumentDefinition(dbtClassMixin):
     name: str
-    type: Literal["path", "query", "header", "body"]
+    type: str  # one of query, body, header, or path
     required: bool = False
 
 
@@ -34,7 +34,7 @@ class ArgumentDefinition(dbtClassMixin):
 class EndpointDefinition(dbtClassMixin):
     name: str
     path: str
-    method: Literal["GET", "POST", "PUT", "PATCH", "DELETE"]
+    method: str  # one of GET, POST, PUT, DELETE, PATCH, HEAD, OPTIONS
     args: List[ArgumentDefinition] = field(default_factory=list)
 
 
@@ -48,5 +48,5 @@ class ExternalServiceDefinition(dbtClassMixin):
 
 @dataclass
 class ExternalServiceFile(dbtClassMixin):
-    external_services: List[ExternalServiceDefinition]
+    services: List[ExternalServiceDefinition]
     version: int = 2
